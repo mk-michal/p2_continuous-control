@@ -1,4 +1,5 @@
 import argparse
+import os
 import time
 
 import deep_rl
@@ -7,6 +8,7 @@ from deep_rl.agent import DeterministicActorCriticNet, FCBody, Config
 from notebook.jstest import argparser
 from unityagents import UnityEnvironment
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -19,9 +21,12 @@ def run_steps(agent):
     t0 = time.time()
     while True:
         if config.save_interval and not agent.total_steps % config.save_interval:
-            agent.save('data/%s-%s-%d' % (agent_name, config.tag, agent.total_steps))
+            agent.save('%s-%s-%d' % (agent_name, config.tag, agent.total_steps))
         if config.log_interval and not agent.total_steps % config.log_interval:
-            agent.logger.info('steps %d, %.2f steps/s' % (agent.total_steps, config.log_interval / (time.time() - t0)))
+            agent.logger.info(
+                f'steps {agent.total_steps}, {config.log_interval / (time.time() - t0)} steps/s '
+                f'Reward over last 10 episodes {np.mean(agent.reward_per_episode[-10:])}'
+            )
             t0 = time.time()
         if config.eval_interval and not agent.total_steps % config.eval_interval:
             agent.eval_episodes()
@@ -42,8 +47,9 @@ def get_ddpg_config(brain_name):
 
     config.task_fn = lambda: UnityEnvironment(file_name='Reacher_Linux/Reacher.x86_64', worker_id=1, seed=1)
     config.max_steps = int(1e6)
-    config.eval_interval = 10000
-    config.eval_episodes = 20
+    config.log_interval = 1000
+    config.eval_interval = 0
+    config.save_interval = 10000
 
 
     config.network_fn = lambda: DeterministicActorCriticNet(
@@ -70,5 +76,3 @@ if __name__ == '__main__':
 
     brain_name = 'ReacherBrain'
     get_ddpg_config(brain_name)
-    # agent = DDPGAgentAdjustedUnity(config, 'ReacherBrain')
-    # for episode in range(args.n_episode):

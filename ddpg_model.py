@@ -1,3 +1,8 @@
+import datetime
+import os
+import pickle
+
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from deep_rl import DDPGAgent, Config, BaseAgent, to_np
@@ -9,6 +14,7 @@ class DDPGAgentAdjustedUnity(BaseAgent):
     '''
     def __init__(self, config, brain_name):
         BaseAgent.__init__(self, config)
+        self.save_path = os.path.join('data', str(datetime.datetime.now()).replace(' ', '_'))
         self.brain_name = brain_name
         self.config = config
         self.task = config.task_fn()
@@ -128,3 +134,12 @@ class DDPGAgentAdjustedUnity(BaseAgent):
             self.network.actor_opt.step()
 
             self.soft_update(self.target_network, self.network)
+
+    def save(self, filename):
+        os.makedirs(self.save_path, exist_ok=True)
+        torch.save(self.network.state_dict(), os.path.join(self.save_path, f'{filename}.model'))
+        with open('%s.stats' % (filename), 'wb') as f:
+            pickle.dump(self.config.state_normalizer.state_dict(), f)
+
+        plt.plot(self.reward_per_episode)
+        plt.savefig(os.path.join(self.save_path, 'results.png'))
