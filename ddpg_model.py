@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import pickle
 
@@ -27,6 +28,14 @@ class DDPGAgentAdjustedUnity(BaseAgent):
         self.state = None
         self.reward_per_episode = []
         self.episode_reward = []
+        # save config file on class init
+
+        config_to_save = {key: str(value) for key, value in config.__dict__.items()}
+        self.logger.info(f'Saving config file as {os.path.join(self.save_path, "config.json")}')
+        os.makedirs(self.save_path, exist_ok=True)
+        with open(os.path.join(self.save_path, 'config.json'), 'w') as j:
+            json.dump(config_to_save, j, indent=4, sort_keys=True)
+
 
     def soft_update(self, target, src):
         for target_param, param in zip(target.parameters(), src.parameters()):
@@ -136,7 +145,6 @@ class DDPGAgentAdjustedUnity(BaseAgent):
             self.soft_update(self.target_network, self.network)
 
     def save(self, filename):
-        os.makedirs(self.save_path, exist_ok=True)
         torch.save(self.network.state_dict(), os.path.join(self.save_path, f'{filename}.model'))
         with open('%s.stats' % (filename), 'wb') as f:
             pickle.dump(self.config.state_normalizer.state_dict(), f)
