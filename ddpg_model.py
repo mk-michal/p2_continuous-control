@@ -151,3 +151,7 @@ class DDPGAgentAdjustedUnity(BaseAgent):
 
         plt.plot(self.reward_per_episode)
         plt.savefig(os.path.join(self.save_path, 'results.png'))
+
+    # def load(self, filename):
+    #     state_dict = torch.load('%s.model' % filename, map_location=lambda storage, loc: storage)
+    #     self.network.load_state_dict(state_dict)

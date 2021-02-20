@@ -1,16 +1,9 @@
-import argparse
 import time
 
-import deep_rl
-from deep_rl import LinearSchedule
-from deep_rl.agent import DeterministicActorCriticNet, FCBody, Config
-from unityagents import UnityEnvironment
-
 import numpy as np
-import torch
-import torch.nn.functional as F
 
 from ddpg_model import DDPGAgentAdjustedUnity
+from utils import get_ddpg_config
 
 
 def run_steps(agent):
@@ -35,46 +28,8 @@ def run_steps(agent):
         agent.switch_task()
 
 
-def get_ddpg_config(brain_name):
-    config = deep_rl.Config()
-    Config.DEVICE = torch.device('cuda:0')
-    config.state_dim = 33
-    config.action_dim = 4
-    config.warm_up = 1000
-    config.target_network_mix = 0.005
-
-    config.task_fn = lambda: UnityEnvironment(file_name='Reacher_Linux/Reacher.x86_64', worker_id=1, seed=1)
-    config.max_steps = int(1e6)
-    config.log_interval = 1000
-    config.eval_interval = 0 # dont evaluate at all during training
-    config.save_interval = 100000
-
-    config.actor_hidden = (400,300)
-    config.critic_hidden = (400, 300)
-    config.actor_lr = 1e-4
-    config.critic_lr =  1e-3
-
-
-    config.network_fn = lambda: DeterministicActorCriticNet(
-        config.state_dim, config.action_dim,
-        actor_body=FCBody(config.state_dim, config.actor_hidden, gate=F.relu),
-        critic_body=FCBody(config.state_dim + config.action_dim, config.critic_hidden, gate=F.relu),
-        actor_opt_fn=lambda params: torch.optim.Adam(params, lr=config.actor_lr),
-        critic_opt_fn=lambda params: torch.optim.Adam(params, lr=config.critic_lr))
-
-    config.replay_fn = lambda: deep_rl.UniformReplay(memory_size=int(1e6), batch_size=100)
-    config.discount = 0.99
-    config.random_process_fn = lambda: deep_rl.OrnsteinUhlenbeckProcess(
-        size=(config.action_dim,), std=LinearSchedule(0.2))
-    run_steps(DDPGAgentAdjustedUnity(config, brain_name))
-
-
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--n-episode', default = 1000, type=int)
-    parser.add_argument('--n-steps', default=1000, type=int)
-    args = parser.parse_args()
 
     brain_name = 'ReacherBrain'
-    get_ddpg_config(brain_name)
+    config = get_ddpg_config(brain_name)
+    run_steps(DDPGAgentAdjustedUnity(config, brain_name))
