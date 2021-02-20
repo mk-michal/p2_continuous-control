@@ -22,7 +22,7 @@ The observation space consists of 33 variables corresponding to position, rotati
 Each action is a vector with four numbers, corresponding to torque applicable to two joints. 
 Every entry in the action vector should be a number between -1 and 1.
 
-### Distributed Training
+### Training
 
 For this project, we worked only with a single agent in order to slove the Unity environment.
 There is also a second version with 20 identical agents that we could solve, however we focused on solving task with only one agent  
@@ -52,4 +52,13 @@ The task is episodic, and in order to solve the environment,  your agent must ge
    - We are using ShangtonZhang github repository, that is used as our base and we are adjusting 
    the agent to our Unity Environment as ShangtonZhang repo is used strictly with OpenAI tasks
      
+# Navigation
+The DDPG model could be found in ddpg_model.py module. It receives a parent BaseAgent class
+from ShangtonZhang repository. 
 
+Training is done in `ddpg_runner.py`. Agent receives hyperparameters that are defined in `utils.py`
+
+Final results are saved into `results` folder. We can find the trained agent model, as well
+with used normalizer and graph of final results.
+
+In order to only run trained model in evaluation model, run `model_evaluation.py`.
